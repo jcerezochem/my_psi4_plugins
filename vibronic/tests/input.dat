@@ -1,0 +1,82 @@
+
+# PYTHONPATH must include directory above plugin directory.
+#     Define either externally or here, then import plugin.
+# The path mast contain the location where vibronic FOLDER lives (NOT the location of the .so)
+sys.path.insert(0, '../../')
+import vibronic
+
+
+# 
+# We need to create TWO Molecule objects. 
+# If we use only one state initially, and the use
+#   state1 = get_active_molecule() 
+# it creates a pointer to the active molecule. If,
+# some manipulations, we try to save another molecule:
+#   state2 = get_active_molecule() 
+# we end up with another pointer, but which points to the same
+# address as state1, so both of them provide the same molecule
+# 
+molecule state1{
+           O          0.000000000000     0.000000000000    -0.066770073122
+           H          0.000000000000    -0.764083917806     0.529844757149
+           H         -0.000000000000     0.764083917806     0.529844757149
+}
+
+molecule state2{
+           O         -0.000000000000     0.000000000000    -0.104550543210
+           H          0.000000000000    -0.786222962791     0.829646495600
+           H         -0.000000000000     0.786222962791     0.829646495600
+}
+
+set {
+  print 3
+  basis 6-31G(d)
+}
+
+# Excites state options
+set roots_per_irrep = [2,0,0,0]
+set cclambda {
+  r_convergence 1e-3
+}
+set cceom {
+  r_convergence 1e-3
+  e_convergence 1e-5
+}
+
+# Options for spectra computation
+set vibronic {
+  print 1
+  temperature 300.0
+  broad_hwhm 0.01
+  corr_npoints 4096
+}
+
+# Perform optimizations and save states
+set_active_molecule(state2)
+print "Optimizing Excited State..."
+optimize("eom-ccsd")
+E2=get_variable("CURRENT ENERGY")
+
+set_active_molecule(state1)
+print "Optimizing Ground State..."
+optimize("ccsd")
+E1=get_variable("CURRENT ENERGY")
+
+# Compute Hessian on first state (for AS model)
+set_active_molecule(state1)
+frequencies('ccsd')
+
+# Select states for vibronic:
+# molecule is initial state
+# molstate is final state
+set_active_molecule(state1)
+set_secondary_molecule(state2)
+
+print_variables()
+
+# Set adiabatic energy just now
+DE = (E2-E1)
+set_variable("CURRENT ENERGY",DE)
+
+vibronic.spectrum()
+
