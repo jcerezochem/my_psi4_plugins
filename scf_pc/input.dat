@@ -1,0 +1,42 @@
+
+# PYTHONPATH must include directory above plugin directory.
+#     Define either externally or here, then import plugin.
+sys.path.insert(0, './..')
+import scf_pc
+
+memory 2 GB
+
+molecule water {
+symmetry c1
+0 1
+ O          0.000000000000     0.000000000000    -0.066770073122
+ H          0.000000000000    -0.764083917806     0.529844757149
+ H         -0.000000000000     0.764083917806     0.529844757149
+}
+
+set scf_pc {
+    pointcharges_file = 'pointcharges.dat'
+}
+
+set {
+    basis 6-31G(d)
+    maxiter 100
+    SCF_TYPE DF
+    D_CONVERGENCE 8
+    E_CONVERGENCE 6
+}
+
+#set roots_per_irrep = [1]
+#set cclambda {
+#  r_convergence 1e-3
+#}
+#set cceom {
+#  r_convergence 1e-3
+#  e_convergence 1e-5
+#}
+
+#property('eom-ccsd',properties=['oscillator_strength'])
+energy('ccsd')
+psi4.plugin('scf_pc.so')
+run_ccenergy('ccsd',bypass_scf="yes")
+#property('eom-ccsd',properties=['oscillator_strength'],bypass_scf="yes")
