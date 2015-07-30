@@ -26,6 +26,7 @@
 #include <psi4-dec.h>
 #include <libparallel/parallel.h>
 #include <liboptions/liboptions.h>
+// This loads all libmints headers
 #include <libmints/mints.h>
 #include <libpsio/psio.hpp>
 // My includes
@@ -69,6 +70,10 @@ int read_options(std::string name, Options& options)
         options.add_double("BROAD_HWHM", 0.01);
         /* Inhomogeneous broadening type (GAUSSIAN/LORENTZIAN) */
         options.add_str("BROAD_TYPE", "GAUSSIAN");
+        /* State 1 and 2 geometry file (psi4 format) */
+        options.add_str_i("GEO1", "geo1.dat");
+        options.add_str_i("GEO2", "geo2.dat");
+        
     }
 
     return true;
@@ -89,6 +94,8 @@ PsiReturnType vibronic(Options& options)
     double corr_time          = options.get_double("CORR_TIME");
     double inh_brd_hwhm       = options.get_double("BROAD_HWHM");
     std::string inh_brd_type  = options.get_str("BROAD_TYPE");
+    std::string geo1_file     = options.get_str("GEO1");
+    std::string geo2_file     = options.get_str("GEO2");
 
        
     // Get difference energy (from "CURRENT ENERGY", expected in Hartree) 
@@ -114,18 +121,26 @@ PsiReturnType vibronic(Options& options)
     outfile->Printf("        Type          : %s\n",inh_brd_type.c_str());
     outfile->Printf("        HWHM (eV)     : %f\n",inh_brd_hwhm        );
     outfile->Printf("     Adiabatic En.(eV): %f\n",de*autoev           );
+    outfile->Printf("\n "                                              );
+    outfile->Printf("     Geo1 file        : %s\n",geo1_file.c_str()   );
+    outfile->Printf("     Geo2 file        : %s\n",geo2_file.c_str()   );
     outfile->Printf("     -------------------------------------\n"     );
     outfile->Printf("\n\n"  );
    
 
     //
     // Get state geometries and vibrations
-    // state1 is environment.molecule 
-    // state2 is environment.molecule2
+    // from text files (to be done)
     //
     // State1
+    // geometry
+    // we fist get the active molecule from Psi4 to get Nat, masses... 
     shared_ptr<Molecule> state1  = Process::environment.molecule();
     int Nat = state1->natom();
+    // but read the geom from external files (TODO: use SharedMatrix objects instead)
+    Matrix geo1(Nat,3);
+    geo1.load(geo1_file.c_str());
+    // vibrational data
     shared_ptr<Vector> frequencies1 = Process::environment.wavefunction()->frequencies();
     frequencies1->set_name("Frequencies (State 1)");
     int Nvib = frequencies1->dim();
@@ -141,7 +156,8 @@ PsiReturnType vibronic(Options& options)
     }
 
     // State2
-    shared_ptr<Molecule> state2  = Process::environment.molecule2();
+    Matrix geo2(Nat,3);
+    geo2.load(geo2_file.c_str());
     // Only AS for the moment...
     shared_ptr<Vector> frequencies2;
     Matrix T2;
@@ -152,13 +168,18 @@ PsiReturnType vibronic(Options& options)
     else {
         throw PSIEXCEPTION("Only AS model available");
     }
-    
+   
+std::cout<< "here.." << std::endl;
+ 
     // Print data
     outfile->Printf("  ==> Geometries and frequencies <==\n\n");
     outfile->Printf("    -------------\n");
     outfile->Printf("     State 1 \n"      );
     outfile->Printf("    -------------\n");
     // Geom
+    // Put the geom into state1 for manipulations. But Molecule expects Bohr units
+    geo1.scale(1.0/BOHRtoANGS);
+    state1->set_full_geometry(geo1);
     state1->print();
     // Freq
     frequencies1->print();
@@ -169,6 +190,11 @@ PsiReturnType vibronic(Options& options)
     outfile->Printf("     State 2 \n"      );
     outfile->Printf("    -------------\n");
     // Geom
+    // Create a new molecule (copy from state1) 
+    shared_ptr<Molecule> state2(state1);
+    // and put the geom into it for manipulations. But Molecule expects Bohr units
+    geo2.scale(1.0/BOHRtoANGS);
+    state2->set_full_geometry(geo2);
     state2->print();
     // Freq
     frequencies2->print();
@@ -180,9 +206,7 @@ PsiReturnType vibronic(Options& options)
     // Set to com
     state1->move_to_com();
     state2->move_to_com();
-    // Mass-weight coordinates
-    Matrix geo1(Nat,3);
-    Matrix geo2(Nat,3);
+    // Mass-weight coordinates (this is ugly)
     for (int i=0; i<Nat; i++) {
         geo1(i,0) = state1->x(i)*sqrt(state1->mass(i)/autoamu);
         geo1(i,1) = state1->y(i)*sqrt(state1->mass(i)/autoamu);
@@ -225,7 +249,6 @@ PsiReturnType vibronic(Options& options)
     //GK.gemv(true,1.,&T1,&vec,1.);
     GM.print();
     GK.print();
-
 
     // Temporary assigment
     de = 2.0/autoev;

@@ -38,8 +38,8 @@ CXXSRC = $(notdir $(wildcard *.cc))
 CXX = /usr/bin/g++
 CXXDEFS = -DFC_SYMBOL=2 -DHAVE_MKL_LAPACK -DHAVE_MKL_BLAS -DHAS_CXX11_VARIADIC_TEMPLATES -DHAS_CXX11_STATIC_ASSERT -DHAS_CXX11_SIZEOF_MEMBER -DHAS_CXX11_RVALUE_REFERENCES -DHAS_CXX11_NULLPTR -DHAS_CXX11_LONG_LONG -DHAS_CXX11_LAMBDA -DHAS_CXX11_INITIALIZER_LIST -DHAS_CXX11_DECLTYPE -DHAS_CXX11_CSTDINT_H -DHAS_CXX11_CONSTEXPR -DHAS_CXX11_AUTO_RET_TYPE -DHAS_CXX11_AUTO -DHAS_CXX11_FUNC -DHAS_CXX11 -DSYS_LINUX
 CXXFLAGS = -DRESTRICT=__restrict__ -Xlinker -export-dynamic -fPIC -std=c++11 -fopenmp -O3 -DNDEBUG -Wno-unused
-INCLUDES = -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_2molecs/src/lib -I/home/cerezo/Programas/src/PSI4/git/psi4public/src/lib -I/home/cerezo/Programas/src/PSI4/git/psi4public/include -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_2molecs/include -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_2molecs/boost/include -I/usr/include/python2.7 -I/usr/include -I/usr/include -I/usr/include -I/usr/include -I/home/cerezo/dev/AUTO-TOOLS/fcclasses/psi4_plugin/vibronic_plugin_mod/vibronic/include -I/usr/include/eigen3
-OBJDIR = /home/cerezo/Programas/src/PSI4/git/psi4public/objdir_2molecs
+INCLUDES = -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_pcm2/src/lib -I/home/cerezo/Programas/src/PSI4/git/psi4public/src/lib -I/home/cerezo/Programas/src/PSI4/git/psi4public/include -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_pcm2/include -I/home/cerezo/Programas/src/PSI4/git/psi4public/objdir_pcm2/boost/include -I/usr/include/python2.7 -I/usr/include -I/usr/include -I/usr/include -I/usr/include -I/home/cerezo/dev/my_psi4_plugins/vibronic/include -I/usr/include/eigen3
+OBJDIR = /home/cerezo/Programas/src/PSI4/git/psi4public/objdir_pcm2
 
 # Used to determine linking flags.
 UNAME = $(shell uname)

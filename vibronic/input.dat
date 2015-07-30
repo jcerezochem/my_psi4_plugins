@@ -1,0 +1,77 @@
+
+# PYTHONPATH must include directory above plugin directory.
+#     Define either externally or here, then import plugin.
+sys.path.insert(0, './..')
+import vibronic
+
+
+# We provide different molecules for each state, with the geom close to opt 
+molecule state1{
+0 1
+           O          0.000000000000     0.000000000000    -0.066770073122
+           H          0.000000000000    -0.764083917806     0.529844757149
+           H         -0.000000000000     0.764083917806     0.529844757149
+}
+molecule state2{
+0 1
+            O    -0.0000000000   0.0000000000  -0.1045652411
+            H     0.0000000000  -0.7864549759   0.8297631286
+            H    -0.0000000000   0.7864549759   0.8297631286
+}
+
+
+set {
+  print 3
+  basis 6-31G(d)
+}
+
+# Excites state options
+set roots_per_irrep = [2,0,0,0]
+set cclambda {
+  r_convergence 1e-3
+}
+set cceom {
+  r_convergence 1e-3
+  e_convergence 1e-5
+}
+
+# Options for spectra computation
+set vibronic {
+  print 1
+  temperature 300.0
+  broad_hwhm 0.01
+  corr_npoints 4096
+}
+
+# Perform optimizations and save states
+# State 2
+print "\n Optimizing State2 \n"
+psi4.set_active_molecule(state2)
+optimize('eom-ccsd')
+# Get geom from active molecule
+mol = psi4.get_active_molecule()
+geom = mol.geometry()
+# Save the geometry to an ASCII file...
+geom.set_name("State2 Geometry")
+geom.save("geo2.dat", False, False, True)
+
+# State 1
+print "\n Optimizing State1 \n"
+psi4.set_active_molecule(state1)
+optimize('ccsd')
+# Get geom from active molecule
+mol = psi4.get_active_molecule()
+geom = mol.geometry()
+# Save the geometry to an ASCII file...
+geom.set_name("State1 Geometry")
+geom.save("geo1.dat", False, False, True)
+# Now freqs
+# This has to be the last job after entering the plugin
+# otherwise the wf information (freqs) might have been
+# overrided
+frequencies('ccsd')
+
+psi4.plugin('vibronic.so')
+#spectrum()
+
+
